@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Arthur Family Tree</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f0f2f5; color: #333; }
+
+  header { background: #2c3e50; color: white; text-align: center; padding: 20px; }
+  header h1 { font-size: 22px; margin-bottom: 4px; }
+  header p  { font-size: 12px; color: #aab; }
+
+  .container { display: flex; gap: 16px; padding: 16px; max-width: 1400px; margin: 0 auto; }
+
+  .sidebar { width: 270px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; }
+
+  .card { background: white; border-radius: 8px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+  .card h2 { font-size: 13px; font-weight: bold; color: #2c3e50; margin-bottom: 10px; padding-bottom: 7px; border-bottom: 2px solid #eee; }
+
+  label { display: block; font-size: 11px; font-weight: bold; color: #666; margin-bottom: 3px; margin-top: 9px; }
+  label:first-of-type { margin-top: 0; }
+
+  input, select { width: 100%; padding: 7px 9px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; color: #333; outline: none; background: white; }
+  input:focus, select:focus { border-color: #2c3e50; }
+
+  button { width: 100%; margin-top: 10px; padding: 8px; background: #2c3e50; color: white; border: none; border-radius: 5px; font-size: 12px; font-weight: bold; cursor: pointer; }
+  button:hover  { background: #3d5166; }
+  button:active { transform: scale(0.98); }
+  .btn-red { background: #e74c3c; }
+  .btn-red:hover { background: #c0392b; }
+
+  .result { margin-top: 8px; padding: 9px 10px; border-radius: 5px; font-size: 12px; display: none; }
+  .result.show    { display: block; }
+  .result.success { background: #eafaf1; border: 1px solid #27ae60; color: #1e8449; }
+  .result.error   { background: #fdedec; border: 1px solid #e74c3c; color: #c0392b; }
+  .result.info    { background: #eaf4fb; border: 1px solid #2980b9; color: #1a5276; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .chip { padding: 2px 9px; border-radius: 12px; font-size: 11px; font-weight: bold; cursor: pointer; border: 1px solid transparent; }
+  .chip.male   { background: #d6eaf8; color: #1a5276; border-color: #aed6f1; }
+  .chip.female { background: #fde8f0; color: #7d1e4a; border-color: #f1aed0; }
+  .chip:hover  { opacity: 0.75; }
+
+  .main-area { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+  .tree-box { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); overflow: auto; min-height: 520px; }
+
+  .legend { display: flex; gap: 16px; font-size: 11px; color: #777; align-items: center; padding: 9px 14px; border-bottom: 1px solid #eee; background: #fafafa; border-radius: 8px 8px 0 0; flex-wrap: wrap; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; vertical-align: middle; }
+
+  .p-node { cursor: pointer; }
+  .p-node rect { transition: opacity 0.15s; }
+  .p-node:hover rect { opacity: 0.75; }
+  .p-node.hl rect { stroke-width: 3 !important; filter: drop-shadow(0 0 6px rgba(0,0,0,0.4)); }
+
+  #info-card { background: white; border-radius: 8px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); display: none; }
+  #info-card.show { display: block; }
+  #info-card h3   { font-size: 15px; color: #2c3e50; margin-bottom: 3px; }
+  #info-card p    { font-size: 11px; color: #999; margin-bottom: 10px; }
+
+  .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 7px; }
+  .info-item { background: #f8f9fa; border: 1px solid #eee; border-radius: 5px; padding: 7px 9px; }
+  .info-item span   { display: block; font-size: 10px; color: #999; text-transform: uppercase; margin-bottom: 2px; }
+  .info-item strong { font-size: 12px; color: #333; word-break: break-word; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>👑 Arthur Family Tree</h1>
+  <p>Kingdom of Lengaburu</p>
+</header>
+
+<div class="container">
+
+  <div class="sidebar">
+
+    <div class="card">
+      <h2>➕ Add Child</h2>
+      <label>Mother's Name</label>
+      <select id="add-mother"><option value="">Select mother...</option></select>
+      <label>Child's Name</label>
+      <input id="add-name" type="text" placeholder="Enter name"/>
+      <label>Gender</label>
+      <select id="add-gender">
+        <option value="">Select...</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+      </select>
+      <button onclick="addChild()">Add Child</button>
+      <div id="add-result" class="result"></div>
+    </div>
+
+    <div class="card">
+      <h2>🔍 Find Relationship</h2>
+      <label>Person</label>
+      <select id="rel-name"><option value="">Select person...</option></select>
+      <label>Relationship</label>
+      <select id="rel-type">
+        <option value="">Select...</option>
+        <option>Paternal-Uncle</option><option>Maternal-Uncle</option>
+        <option>Paternal-Aunt</option><option>Maternal-Aunt</option>
+        <option>Sister-In-Law</option><option>Brother-In-Law</option>
+        <option>Son</option><option>Daughter</option>
+        <option>Siblings</option><option>Children</option>
+        <option>Mother</option><option>Father</option><option>Spouse</option>
+        <option>Grandchildren</option>
+        <option>Maternal-Grandmother</option><option>Maternal-Grandfather</option>
+        <option>Paternal-Grandmother</option><option>Paternal-Grandfather</option>
+      </select>
+      <button onclick="getRelationship()">Search</button>
+      <div id="rel-result" class="result"></div>
+    </div>
+
+    <div class="card">
+      <h2>↺ Reset</h2>
+      <p style="font-size:11px;color:#999;margin-bottom:4px;">Restore original family tree.</p>
+      <button class="btn-red" onclick="resetTree()">Reset Tree</button>
+    </div>
+
+  </div>
+
+  <div class="main-area">
+    <div class="tree-box">
+      <div class="legend">
+        <span><span class="dot" style="background:#5b9bd5"></span>Male</span>
+        <span><span class="dot" style="background:#d57b9b"></span>Female</span>
+        <span><span style="display:inline-block;width:22px;border-top:2px dashed #aaa;vertical-align:middle;margin-right:4px;"></span>Married</span>
+        <span style="color:#bbb;font-size:10px;">Click a person to see their details</span>
+      </div>
+      <div style="padding: 20px; overflow: auto;">
+        <svg id="tree-svg" style="display: block;"></svg>
+      </div>
+    </div>
+
+    <div id="info-card">
+      <h3 id="ic-name"></h3>
+      <p  id="ic-meta"></p>
+      <div class="info-grid" id="ic-grid"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────
+let members = [];
+
+// ── Boot ─────────────────────────────────────────────────────
+async function init() {
+  const data = await fetch('/api/tree').then(r => r.json());
+  members = data.members;
+  populateDropdowns();
+  renderTree();
+}
+
+// ── Dropdowns ────────────────────────────────────────────────
+function populateDropdowns() {
+  const females = members.filter(m => m.gender === 'Female').map(m => m.name);
+  setOptions('add-mother', females, 'Select mother...');
+  setOptions('rel-name', members.map(m => m.name), 'Select person...');
+}
+
+function setOptions(id, names, ph) {
+  const sel = document.getElementById(id);
+  const cur = sel.value;
+  sel.innerHTML = `<option value="">${ph}</option>`;
+  names.forEach(n => {
+    const o = document.createElement('option');
+    o.value = o.textContent = n;
+    if (n === cur) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+// ── Add Child ────────────────────────────────────────────────
+async function addChild() {
+  const mother = document.getElementById('add-mother').value;
+  const child  = document.getElementById('add-name').value.trim();
+  const gender = document.getElementById('add-gender').value;
+  const box    = document.getElementById('add-result');
+  if (!mother || !child || !gender) { showResult(box, 'Please fill in all fields.', 'error'); return; }
+
+  const data = await fetch('/api/add_child', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mother, child, gender }),
+  }).then(r => r.json());
+
+  if (data.result === 'CHILD_ADDED') {
+    showResult(box, '✓ ' + data.message, 'success');
+    members = data.members;
+    document.getElementById('add-name').value = '';
+    populateDropdowns();
+    renderTree();
+  } else {
+    showResult(box, '✗ ' + data.message, 'error');
+  }
+}
+
+// ── Get Relationship ─────────────────────────────────────────
+async function getRelationship() {
+  const name = document.getElementById('rel-name').value;
+  const rel  = document.getElementById('rel-type').value;
+  const box  = document.getElementById('rel-result');
+  if (!name || !rel) { showResult(box, 'Please select a person and relationship.', 'error'); return; }
+
+  const data = await fetch('/api/get_relationship', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, relationship: rel }),
+  }).then(r => r.json());
+
+  clearHighlights();
+
+  if (data.names && data.names.length > 0) {
+    const chips = data.names.map(n => {
+      const m = members.find(x => x.name === n);
+      const g = m ? m.gender.toLowerCase() : 'male';
+      return `<span class="chip ${g}" onclick="selectPerson('${n}')">${n}</span>`;
+    }).join('');
+    box.className = 'result show info';
+    box.innerHTML = `<strong>Found ${data.names.length} result(s):</strong><div class="chips">${chips}</div>`;
+    highlightNodes(data.names);
+  } else if (data.result === 'PERSON_NOT_FOUND') {
+    showResult(box, 'Person not found in the family tree.', 'error');
+  } else {
+    showResult(box, `No ${rel} found for ${name}.`, 'info');
+  }
+}
+
+// ── Reset ────────────────────────────────────────────────────
+async function resetTree() {
+  const data = await fetch('/api/reset', { method: 'POST' }).then(r => r.json());
+  members = data.members;
+  populateDropdowns();
+  renderTree();
+  document.getElementById('rel-result').className = 'result';
+  document.getElementById('add-result').className = 'result';
+  document.getElementById('info-card').classList.remove('show');
+}
+
+// ── Select Person ────────────────────────────────────────────
+function selectPerson(name) {
+  const p = members.find(m => m.name === name);
+  if (!p) return;
+
+  document.getElementById('info-card').classList.add('show');
+  document.getElementById('ic-name').textContent = p.name;
+  document.getElementById('ic-meta').textContent = p.gender;
+
+  const sibs = (() => {
+    if (!p.mother) return '—';
+    const mom = members.find(m => m.name === p.mother);
+    if (!mom) return '—';
+    const s = mom.children.filter(c => c !== p.name);
+    return s.length ? s.join(', ') : '—';
+  })();
+
+  const fields = [
+    { label: 'Mother',   value: p.mother   || '—' },
+    { label: 'Father',   value: p.father   || '—' },
+    { label: 'Spouse',   value: p.spouse   || '—' },
+    { label: 'Children', value: p.children.length ? p.children.join(', ') : '—' },
+    { label: 'Siblings', value: sibs },
+  ];
+
+  document.getElementById('ic-grid').innerHTML = fields.map(f =>
+    `<div class="info-item"><span>${f.label}</span><strong>${f.value}</strong></div>`
+  ).join('');
+
+  clearHighlights();
+  highlightNodes([name]);
+  document.getElementById('info-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+function showResult(box, msg, type) { box.className = `result show ${type}`; box.textContent = msg; }
+function clearHighlights() { document.querySelectorAll('.p-node.hl').forEach(e => e.classList.remove('hl')); }
+function highlightNodes(names) {
+  names.forEach(n => {
+    const e = document.getElementById('node-' + n.replace(/\s+/g, '_'));
+    if (e) e.classList.add('hl');
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// TREE RENDERER
+//
+// Algorithm:
+//
+// Step 1 — Build a "slot list" for each generation row.
+//   A slot is either:
+//     { type:'single',  name }              — person with no spouse
+//     { type:'couple',  name, spouseName }  — person + spouse side by side
+//
+//   We walk mother.children to build each row.
+//   IMPORTANT: when a person's spouse is ALSO in the same sibling list
+//   (e.g. Alice & Albus are both Ginerva's children AND married to each other)
+//   we merge them into ONE couple slot and skip the spouse when we reach them.
+//
+// Step 2 — Compute each slot's pixel width bottom-up.
+//   couple slot width = NW + SPOUSE_GAP + NW
+//   single slot width = NW
+//   parent slot width = max(own display width, sum of child slot widths + gaps)
+//
+// Step 3 — Assign (x, y) positions top-down, centring each parent over its children.
+//
+// Step 4 — Draw spouse lines (dashed) and parent→child connector lines.
+//
+// Step 5 — Draw node rectangles on top.
+// ─────────────────────────────────────────────────────────────────────
+function renderTree() {
+  const svg = document.getElementById('tree-svg');
+  svg.innerHTML = '';
+
+  // ── Constants ─────────────────────────────
+  const NW          = 100;   // node width
+  const NH          = 28;    // node height
+  const RX          = 4;     // border radius
+  const H_GAP       = 12;    // gap between sibling slots
+  const SPOUSE_GAP  = 12;    // gap between person and spouse
+  const V_GAP       = 72;    // vertical gap: parent bottom → child top
+  const PAD         = 24;    // canvas padding
+
+  const M_FILL      = '#5b9bd5';
+  const M_STROKE    = '#2b6ca8';
+  const F_FILL      = '#d57b9b';
+  const F_STROKE    = '#a04070';
+  const EDGE_CLR    = '#bbb';
+  const SPOUSE_CLR  = '#aaa';
+
+  // ── Build lookup ──────────────────────────
+  const by = {};
+  members.forEach(m => { by[m.name] = m; });
+
+  // ── Step 1: Build slot tree ───────────────
+  //
+  // Each "slot" = one visual unit in a row:
+  //   single: just one node
+  //   couple: two nodes side by side (person + spouse)
+  //
+  // A slot can have child slots (the children of the mother in a couple,
+  // or the children of a single parent).
+  //
+  // Key rule to handle siblings-who-married:
+  //   When building the slot list for a mother's children, we iterate
+  //   through children in order. If child[i] has a spouse and that spouse
+  //   is ALSO in the same children list, we:
+  //     - create ONE couple slot for (child[i], spouse)
+  //     - mark the spouse as "already placed" so we skip it
+
+  const placed = new Set(); // tracks names already placed in a slot
+
+  function buildSlots(motherName) {
+    const mother = by[motherName];
+    if (!mother || !mother.children || mother.children.length === 0) return [];
+
+    const slots = [];
+    mother.children.forEach(childName => {
+      if (placed.has(childName)) return; // already placed as a spouse
+      placed.add(childName);
+
+      const child = by[childName];
+      if (!child) return;
+
+      // Does this child have a spouse who is ALSO in this sibling list?
+      const spouseName   = child.spouse || null;
+      const spouseInSibs = spouseName && mother.children.includes(spouseName);
+
+      let slot;
+      if (spouseName && !spouseInSibs) {
+        // Spouse comes from outside this family — show as couple
+        // The "mother" of the children is whoever has children listed
+        // If child has children, child is the anchor
+        // If spouse has children (and child doesn't), use spouse as anchor
+        const childHasKids  = child.children && child.children.length > 0;
+        const spouseHasKids = by[spouseName] && by[spouseName].children && by[spouseName].children.length > 0;
+
+        if (childHasKids) {
+          slot = { name: childName, spouseName, childSlots: buildSlots(childName) };
+        } else if (spouseHasKids) {
+          // Spouse has the kids — but we display child on left, spouse on right
+          // Children belong to spouse's list
+          const spouseData = by[spouseName];
+          if (!placed.has(spouseName)) placed.add(spouseName);
+          slot = { name: childName, spouseName, childSlots: buildSlots(spouseName) };
+        } else {
+          slot = { name: childName, spouseName, childSlots: [] };
+        }
+
+      } else if (spouseInSibs) {
+        // Spouse is ALSO a sibling in this same row — merge into one couple slot
+        placed.add(spouseName);
+
+        // Determine who has the children (should be the female = mother)
+        const childHasKids  = child.children && child.children.length > 0;
+        const spouseData    = by[spouseName];
+        const spouseHasKids = spouseData && spouseData.children && spouseData.children.length > 0;
+
+        // Pick the female as anchor (she's the mother of the children)
+        let anchorName, partnerName;
+        if (child.gender === 'Female') {
+          anchorName = childName; partnerName = spouseName;
+        } else {
+          anchorName = spouseName; partnerName = childName;
+        }
+
+        const childSlots = buildSlots(anchorName);
+        // Show male on LEFT, female on RIGHT to match the reference diagram
+        // But we need to decide left/right for display
+        // Reference shows: Bill(m) Flora(f), Ronald(m) Helen(f) — male left
+        // For Alice/Albus: Albus(m) Alice(f) — keep male left
+        const leftName  = child.gender === 'Male' ? childName  : spouseName;
+        const rightName = child.gender === 'Male' ? spouseName : childName;
+
+        slot = { name: leftName, spouseName: rightName, childSlots };
+
+      } else {
+        // No spouse
+        const childSlots = (child.children && child.children.length > 0)
+          ? buildSlots(childName)
+          : [];
+        slot = { name: childName, spouseName: null, childSlots };
+      }
+
+      slots.push(slot);
+    });
+
+    return slots;
+  }
+
+  // Find root mother: female, no mother, no father, has children
+  const rootMother = members.find(m =>
+    !m.mother && !m.father && m.children && m.children.length > 0 && m.gender === 'Female'
+  ) || members.find(m =>
+    !m.mother && !m.father && m.children && m.children.length > 0
+  );
+
+  if (!rootMother) return;
+
+  // Build root slot manually (the root couple themselves)
+  const rootSpouseName = rootMother.spouse || null;
+  const rootChildSlots = buildSlots(rootMother.name);
+
+  // Root: show male(King Arthur) left, female(Queen Margret) right
+  // But rootMother IS the female, so:
+  const rootLeftName  = rootSpouseName || rootMother.name; // male = King Arthur
+  const rootRightName = rootSpouseName ? rootMother.name : null; // female = Queen Margret
+
+  const rootSlot = {
+    name:       rootLeftName,
+    spouseName: rootRightName,
+    childSlots: rootChildSlots
+  };
+
+  // ── Step 2: Compute widths bottom-up ──────
+  function slotDisplayW(slot) {
+    return slot.spouseName ? (NW + SPOUSE_GAP + NW) : NW;
+  }
+
+  function computeWidth(slot) {
+    slot.childSlots.forEach(c => computeWidth(c));
+    if (slot.childSlots.length === 0) {
+      slot.width = slotDisplayW(slot);
+    } else {
+      const childSum = slot.childSlots.reduce((s, c) => s + c.width, 0)
+                     + (slot.childSlots.length - 1) * H_GAP;
+      slot.width = Math.max(slotDisplayW(slot), childSum);
+    }
+  }
+
+  computeWidth(rootSlot);
+
+  // ── Step 3: Assign positions top-down ─────
+  const pos = {}; // name → { x, y }
+
+  function assignPos(slot, groupLeft, y) {
+    const dw         = slotDisplayW(slot);
+    const personLeft = groupLeft + Math.round((slot.width - dw) / 2);
+
+    pos[slot.name] = { x: personLeft, y };
+    if (slot.spouseName) {
+      pos[slot.spouseName] = { x: personLeft + NW + SPOUSE_GAP, y };
+    }
+
+    if (slot.childSlots.length > 0) {
+      const childSum    = slot.childSlots.reduce((s, c) => s + c.width, 0)
+                        + (slot.childSlots.length - 1) * H_GAP;
+      let cx = groupLeft + Math.round((slot.width - childSum) / 2);
+      const childY = y + NH + V_GAP;
+      slot.childSlots.forEach(child => {
+        assignPos(child, cx, childY);
+        cx += child.width + H_GAP;
+      });
+    }
+  }
+
+  assignPos(rootSlot, PAD, PAD);
+
+  // Place any members not yet positioned (edge cases / newly added)
+  const maxY = Math.max(...Object.values(pos).map(p => p.y));
+  let extraX = PAD;
+  members.forEach(m => {
+    if (!pos[m.name]) {
+      pos[m.name] = { x: extraX, y: maxY + NH + V_GAP };
+      extraX += NW + H_GAP;
+    }
+  });
+
+  // ── Canvas size ───────────────────────────
+  const svgW = Math.max(...Object.values(pos).map(p => p.x + NW)) + PAD;
+  const svgH = Math.max(...Object.values(pos).map(p => p.y + NH)) + PAD;
+  svg.setAttribute('width',   svgW);
+  svg.setAttribute('height',  svgH);
+  svg.setAttribute('viewBox', `0 0 ${svgW} ${svgH}`);
+
+  // ── Step 4: Draw edges ─────────────────────
+  const edgeLayer = svgEl('g');
+  svg.appendChild(edgeLayer);
+
+  // a) Spouse lines (dashed horizontal)
+  const drawnSpouses = new Set();
+  members.forEach(m => {
+    if (!m.spouse || !pos[m.name] || !pos[m.spouse]) return;
+    const key = [m.name, m.spouse].sort().join('|');
+    if (drawnSpouses.has(key)) return;
+    drawnSpouses.add(key);
+
+    const p1 = pos[m.name], p2 = pos[m.spouse];
+    const lp = p1.x < p2.x ? p1 : p2;
+    const rp = p1.x < p2.x ? p2 : p1;
+    svgLine(edgeLayer, lp.x + NW, lp.y + NH / 2, rp.x, rp.y + NH / 2, SPOUSE_CLR, 1.5, '5 4');
+  });
+
+  // b) Parent → children connectors (recursive through slot tree)
+  function drawEdges(slot) {
+    if (slot.childSlots.length === 0) return;
+
+    const pp = pos[slot.name];
+    if (!pp) return;
+
+    // Drop X = midpoint of the gap between the couple
+    // If no spouse, centre of the single node
+    let dropX;
+    if (slot.spouseName && pos[slot.spouseName]) {
+      const sp = pos[slot.spouseName];
+      // Midpoint between right edge of left node and left edge of right node
+      const leftEdge  = Math.min(pp.x, sp.x) + NW;
+      const rightEdge = Math.max(pp.x, sp.x);
+      dropX = Math.round((leftEdge + rightEdge) / 2);
+    } else {
+      dropX = Math.round(pp.x + NW / 2);
+    }
+
+    const parentBottom = pp.y + NH;
+
+    // Top-centre X of each child slot's anchor node
+    const childTops = slot.childSlots
+      .map(c => pos[c.name])
+      .filter(Boolean)
+      .map(p => ({ x: Math.round(p.x + NW / 2), y: p.y }));
+
+    if (childTops.length === 0) return;
+
+    const childTopY = childTops[0].y;
+    const elbowY    = Math.round(parentBottom + (childTopY - parentBottom) / 2);
+
+    // Vertical: parent bottom → elbow
+    svgLine(edgeLayer, dropX, parentBottom, dropX, elbowY, EDGE_CLR, 1.5);
+
+    if (childTops.length === 1) {
+      // Single child: straight line elbow → child
+      svgLine(edgeLayer, childTops[0].x, elbowY, childTops[0].x, childTopY, EDGE_CLR, 1.5);
+    } else {
+      // Multiple children: horizontal bar + drops
+      svgLine(edgeLayer, childTops[0].x, elbowY, childTops[childTops.length - 1].x, elbowY, EDGE_CLR, 1.5);
+      childTops.forEach(ct => svgLine(edgeLayer, ct.x, elbowY, ct.x, ct.y, EDGE_CLR, 1.5));
+    }
+
+    slot.childSlots.forEach(c => drawEdges(c));
+  }
+
+  drawEdges(rootSlot);
+
+  // ── Step 5: Draw nodes ─────────────────────
+  const nodeLayer = svgEl('g');
+  svg.appendChild(nodeLayer);
+
+  members.forEach(m => {
+    const p = pos[m.name];
+    if (!p) return;
+
+    const isMale = m.gender === 'Male';
+    const g      = svgEl('g');
+    g.setAttribute('class', 'p-node');
+    g.setAttribute('id', 'node-' + m.name.replace(/\s+/g, '_'));
+    g.setAttribute('transform', `translate(${p.x},${p.y})`);
+    g.addEventListener('click', () => selectPerson(m.name));
+
+    const rect = svgEl('rect');
+    rect.setAttribute('width',        NW);
+    rect.setAttribute('height',       NH);
+    rect.setAttribute('rx',           RX);
+    rect.setAttribute('fill',         isMale ? M_FILL   : F_FILL);
+    rect.setAttribute('stroke',       isMale ? M_STROKE : F_STROKE);
+    rect.setAttribute('stroke-width', '2');
+    g.appendChild(rect);
+
+    const label = m.name.length > 11 ? m.name.slice(0, 10) + '…' : m.name;
+    const txt   = svgEl('text');
+    txt.textContent = label;
+    txt.setAttribute('x',                 NW / 2);
+    txt.setAttribute('y',                 NH / 2 + 1);
+    txt.setAttribute('text-anchor',       'middle');
+    txt.setAttribute('dominant-baseline', 'central');
+    txt.setAttribute('fill',              'white');
+    txt.setAttribute('font-size',         '11');
+    txt.setAttribute('font-family',       'Arial, sans-serif');
+    txt.setAttribute('font-weight',       'bold');
+    txt.setAttribute('pointer-events',    'none');
+    g.appendChild(txt);
+
+    nodeLayer.appendChild(g);
+  });
+}
+
+// ── SVG helpers ───────────────────────────────────────────────
+function svgEl(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+
+function svgLine(parent, x1, y1, x2, y2, stroke, width, dash) {
+  const l = svgEl('line');
+  l.setAttribute('x1', x1); l.setAttribute('y1', y1);
+  l.setAttribute('x2', x2); l.setAttribute('y2', y2);
+  l.setAttribute('stroke', stroke);
+  l.setAttribute('stroke-width', width);
+  if (dash) l.setAttribute('stroke-dasharray', dash);
+  parent.appendChild(l);
+}
+
+init();
+</script>
+</body>
+</html>

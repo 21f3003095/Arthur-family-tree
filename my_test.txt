@@ -1,0 +1,5 @@
+GET_RELATIONSHIP "Ronald" Son
+GET_RELATIONSHIP Ted Paternal-Uncle
+GET_RELATIONSHIP Ginerva Siblings
+ADD_CHILD Helen Tyler Male
+GET_RELATIONSHIP Tyler Siblings

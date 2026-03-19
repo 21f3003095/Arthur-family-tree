@@ -1,0 +1,16 @@
+# ── Challenge sample ──
+ADD_CHILD Flora Minerva Female
+GET_RELATIONSHIP Remus Maternal-Aunt
+GET_RELATIONSHIP Minerva Siblings
+
+# ── Error-case samples ──
+# Sample 1 – Luna does not exist
+ADD_CHILD Luna Lola Female
+GET_RELATIONSHIP Luna Maternal-Aunt
+
+# Sample 2 – Ted is male, child addition should fail
+ADD_CHILD Ted Bella Female
+GET_RELATIONSHIP Remus Siblings
+
+# Sample 3 – Sister-In-Law of Lily
+GET_RELATIONSHIP Lily Sister-In-Law
