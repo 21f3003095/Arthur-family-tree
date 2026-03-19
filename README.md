@@ -115,6 +115,10 @@ Open `http://localhost:5000` in your browser. The UI lets you:
 - Reset the tree back to original
 
 ---
+## Web UI Preview
+
+![Arthur Family Tree Web UI](Doc/webpage.png)
+
 
 ## Usage — Terminal Commands via curl
 
