@@ -1,4 +1,4 @@
-# Glynac — Family Tree Coding Challenge
+# Glynac — Family Tree Coding Challeng
 
 A clean, object-oriented Python solution modelling the King Arthur family tree for the Glynac Data Engineering coding challenge.
 
@@ -17,6 +17,8 @@ pip install -r requirements.txt
 
 # 3. Run the program (command-line mode)
 python3 main.py sample_input.txt
+or
+python3 main.py my_test.txt
 
 # 4. Run the web UI
 python3 app.py
@@ -54,7 +56,8 @@ glynac-family-tree/
 ├── static/
 │   └── index.html            # Web UI (HTML + CSS + JS in one file)
 │
-├── sample_input.txt          # Sample commands from the challenge PDF
+├── sample_input.txt          # Sample commands from the challenge
+├── my_test.txt               # put your custom commands for the testing
 ├── requirements.txt
 ├── .gitignore
 └── README.md
